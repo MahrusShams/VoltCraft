@@ -1,7 +1,7 @@
 #include <math.h>
-#include "solver.h" // Include your own header file!
+#include "solver.h" 
 
-#define EPSILON 1e-9 // Threshold to detect singular matrices (division by zero)
+#define EPSILON 1e-9 
 
 int solveMatrixDynamic(double A[MAX_MNA][MAX_MNA], double b[MAX_MNA], double x[MAX_MNA], int size) {
     
@@ -46,12 +46,12 @@ int solveMatrixDynamic(double A[MAX_MNA][MAX_MNA], double b[MAX_MNA], double x[M
     // --- PHASE 3: BACK SUBSTITUTION ---
     for (int i = size - 1; i >= 0; i--) {
         double sum = 0.0;
-        // Notice this loop also stops at 'size'
+        
         for (int j = i + 1; j < size; j++) {
             sum += A[i][j] * x[j];
         }
         x[i] = (b[i] - sum) / A[i][i];
     }
 
-    return 0; // Success
+    return 0; 
 }
