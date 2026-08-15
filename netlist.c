@@ -13,11 +13,25 @@ typedef struct
     double value;
 } Component;
 
-void bfsAssignNode(int start, int totalPoints, int graph[MAX_POINTS][MAX_POINTS],
-    int visited[], int nodeNumber[], int currentNode)
+
+// ---------------------------------------------------------
+// BFS
+// Finds all grid points connected together by wires
+// and assigns them to the same electrical node.
+// ---------------------------------------------------------
+
+void bfsAssignNode(
+    int start,
+    int totalPoints,
+    int graph[MAX_POINTS][MAX_POINTS],
+    int visited[],
+    int nodeNumber[],
+    int currentNode)
 {
     int queue[MAX_POINTS];
-    int front = 0, rear = 0;
+
+    int front = 0;
+    int rear = 0;
 
     queue[rear++] = start;
     visited[start] = 1;
@@ -25,11 +39,13 @@ void bfsAssignNode(int start, int totalPoints, int graph[MAX_POINTS][MAX_POINTS]
     while (front < rear)
     {
         int current = queue[front++];
+
         nodeNumber[current] = currentNode;
 
         for (int neighbor = 0; neighbor < totalPoints; neighbor++)
         {
-            if (graph[current][neighbor] == 1 && visited[neighbor] == 0)
+            if (graph[current][neighbor] == 1 &&
+                visited[neighbor] == 0)
             {
                 visited[neighbor] = 1;
                 queue[rear++] = neighbor;
@@ -38,18 +54,108 @@ void bfsAssignNode(int start, int totalPoints, int graph[MAX_POINTS][MAX_POINTS]
     }
 }
 
-void printPointMapping(int totalPoints, int nodeNumber[])
+
+// ---------------------------------------------------------
+// Assign electrical nodes
+//
+// Ground-connected points become Node 0.
+//
+// Every other group of wire-connected points becomes
+// Node 1, Node 2, Node 3, ...
+//
+// Returns the total number of electrical nodes.
+// ---------------------------------------------------------
+
+int assignElectricalNodes(
+    int totalPoints,
+    int groundPoint,
+    int graph[MAX_POINTS][MAX_POINTS],
+    int nodeNumber[])
+{
+    int visited[MAX_POINTS] = { 0 };
+
+    // Initially no point belongs to an electrical node
+    for (int i = 0; i < totalPoints; i++)
+    {
+        nodeNumber[i] = -1;
+    }
+
+    int currentNode = 0;
+
+
+    // -----------------------------------------------------
+    // Ground-connected group becomes Node 0
+    // -----------------------------------------------------
+
+    bfsAssignNode(
+        groundPoint,
+        totalPoints,
+        graph,
+        visited,
+        nodeNumber,
+        currentNode
+    );
+
+    currentNode++;
+
+
+    // -----------------------------------------------------
+    // Find remaining wire-connected groups
+    // -----------------------------------------------------
+
+    for (int i = 0; i < totalPoints; i++)
+    {
+        if (visited[i] == 0)
+        {
+            bfsAssignNode(
+                i,
+                totalPoints,
+                graph,
+                visited,
+                nodeNumber,
+                currentNode
+            );
+
+            currentNode++;
+        }
+    }
+
+
+    return currentNode;
+}
+
+
+// ---------------------------------------------------------
+// Debugging function
+// Prints which electrical node each grid point belongs to.
+// ---------------------------------------------------------
+
+void printPointMapping(
+    int totalPoints,
+    int nodeNumber[])
 {
     printf("\nGRID POINT TO ELECTRICAL NODE MAPPING:\n");
     printf("--------------------------------------\n");
 
     for (int i = 0; i < totalPoints; i++)
     {
-        printf("Point %d -> Node %d\n", i, nodeNumber[i]);
+        printf(
+            "Point %d -> Node %d\n",
+            i,
+            nodeNumber[i]
+        );
     }
 }
 
-void printNetlist(Component components[], int componentCount, int nodeNumber[])
+
+// ---------------------------------------------------------
+// Prints generated circuit netlist
+// ---------------------------------------------------------
+
+void printNetlist(
+    Component components[],
+    int componentCount,
+    int nodeNumber[])
 {
     printf("\nGENERATED NETLIST:\n");
     printf("------------------\n");
@@ -58,92 +164,12 @@ void printNetlist(Component components[], int componentCount, int nodeNumber[])
     {
         Component c = components[i];
 
-        printf("%s %d %d %.2lf\n",
+        printf(
+            "%s %d %d %.2lf\n",
             c.name,
             nodeNumber[c.pointA],
             nodeNumber[c.pointB],
-            c.value);
+            c.value
+        );
     }
-}
-
-int main()
-{
-    int totalPoints;
-    int graph[MAX_POINTS][MAX_POINTS] = { 0 };
-
-    printf("Enter number of grid points: ");
-    scanf("%d", &totalPoints);
-
-    printf("\nGrid points will be numbered from 0 to %d\n", totalPoints - 1);
-
-    int groundPoint;
-    printf("Enter ground point number: ");
-    scanf("%d", &groundPoint);
-
-    int wireCount;
-    printf("\nEnter number of wires: ");
-    scanf("%d", &wireCount);
-
-    printf("Enter each wire as: pointA pointB\n");
-
-    for (int i = 0; i < wireCount; i++)
-    {
-        int a, b;
-        printf("Wire %d: ", i + 1);
-        scanf("%d %d", &a, &b);
-
-        graph[a][b] = 1;
-        graph[b][a] = 1;
-    }
-
-    Component components[MAX_COMPONENTS];
-    int componentCount;
-
-    printf("\nEnter number of components: ");
-    scanf("%d", &componentCount);
-
-    printf("\nEnter each component as:\n");
-    printf("name type pointA pointB value\n");
-    printf("Example: R1 R 0 1 100\n\n");
-
-    for (int i = 0; i < componentCount; i++)
-    {
-        printf("Component %d: ", i + 1);
-
-        scanf("%s %c %d %d %lf",
-            components[i].name,
-            &components[i].type,
-            &components[i].pointA,
-            &components[i].pointB,
-            &components[i].value);
-    }
-
-    int visited[MAX_POINTS] = { 0 };
-    int nodeNumber[MAX_POINTS];
-
-    for (int i = 0; i < totalPoints; i++)
-    {
-        nodeNumber[i] = -1;
-    }
-
-    int currentNode = 0;
-
-    // Ground-connected group becomes Node 0
-    bfsAssignNode(groundPoint, totalPoints, graph, visited, nodeNumber, currentNode);
-    currentNode++;
-
-    // Other wire-connected groups become Node 1, Node 2, ...
-    for (int i = 0; i < totalPoints; i++)
-    {
-        if (visited[i] == 0)
-        {
-            bfsAssignNode(i, totalPoints, graph, visited, nodeNumber, currentNode);
-            currentNode++;
-        }
-    }
-
-    printPointMapping(totalPoints, nodeNumber);
-    printNetlist(components, componentCount, nodeNumber);
-
-    return 0;
 }
