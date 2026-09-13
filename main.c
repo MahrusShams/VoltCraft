@@ -164,7 +164,6 @@ int main()
                 }
             }
 
-
             if (!groundPlaced)
             {
                 printf("\nERROR: Ground has not been placed.\n");
@@ -186,38 +185,14 @@ int main()
                 groundPosition,
                 &circuit))
             {
-                int totalNodes =
-                    assignElectricalNodes(
-                        circuit.pointCount,
-                        circuit.groundPoint,
-                        circuit.graph,
-                        nodeNumber
-                    );
+                int totalNodes = assignElectricalNodes(circuit.pointCount,circuit.groundPoint,circuit.graph,nodeNumber);
 
+                printPointMapping(circuit.pointCount,nodeNumber);
 
-                printPointMapping(
-                    circuit.pointCount,
-                    nodeNumber
-                );
+                printNetlist(circuit.components,circuit.componentCount,nodeNumber);
 
-
-                printNetlist(
-                    circuit.components,
-                    circuit.componentCount,
-                    nodeNumber
-                );
-
-
-                int activeNodes =
-                    totalNodes - 1;
-
-
-                buildAndSolveCircuit(
-                    circuit.components,
-                    circuit.componentCount,
-                    activeNodes,
-                    nodeNumber
-                );
+                int activeNodes = totalNodes - 1;
+                buildAndSolveCircuit(circuit.components,circuit.componentCount,activeNodes,nodeNumber);
             }
             else
             {
