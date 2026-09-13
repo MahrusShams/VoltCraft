@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #include "raylib.h"
 #include "grid.h"
 #include "wire.h"
@@ -53,7 +52,6 @@ ToolMode SelectMode(ToolMode currentTool, bool* wireStarted)
     return currentTool;
 }
 
-
 const char* GetModeName(ToolMode mode)
 {
     switch (mode)
@@ -79,7 +77,7 @@ const char* GetModeName(ToolMode mode)
 }
 
 
-int main(void)
+int main()
 {
     const int screenWidth = 1200;
     const int screenHeight = 700;
@@ -91,7 +89,6 @@ int main(void)
     // Wire data
     Wire wire[100];
     int wireCount = 0;
-
     bool wireStarted = false;
     Vector2 wireStart = { 0, 0 };
 
@@ -129,16 +126,9 @@ int main(void)
         Vector2 mousePosition = GetMousePosition();
         Vector2 snappedPosition = SnapToGrid(mousePosition);
 
-        currentTool = SelectMode(
-            currentTool,
-            &wireStarted
-        );
+        currentTool = SelectMode(currentTool,&wireStarted);
 
-
-        // -------------------------------------------------
-        // Clear circuit
-        // -------------------------------------------------
-
+        //Delete Everything
         if (IsKeyPressed(KEY_DELETE))
         {
             wireCount = 0;
@@ -153,11 +143,7 @@ int main(void)
             groundPlaced = false;
         }
 
-
-        // -------------------------------------------------
-        // Solve circuit
-        // -------------------------------------------------
-
+        //Solve the Circuit
         if (IsKeyPressed(KEY_S))
         {
             bool validCircuit = true;
@@ -181,16 +167,12 @@ int main(void)
 
             if (!groundPlaced)
             {
-                printf(
-                    "\nERROR: Ground has not been placed.\n"
-                );
+                printf("\nERROR: Ground has not been placed.\n");
             }
 
             else if (!validCircuit)
             {
-                printf(
-                    "\nERROR: Give every component a non-zero value.\n"
-                );
+                printf("\nERROR: Give every component a non-zero value.\n");
             }
 
             else if (BuildCircuitData(
@@ -237,28 +219,102 @@ int main(void)
                     nodeNumber
                 );
             }
-
             else
             {
-                printf(
-                    "\nERROR: Circuit data could not be generated.\n"
-                );
+                printf("\nERROR: Circuit data could not be generated.\n");
             }
         }
 
+        BeginDrawing();
 
-        // -------------------------------------------------
-        // Wire tool
-        // -------------------------------------------------
+        ClearBackground(RAYWHITE);
+
+        DrawCircuitGrid();
+
+        // Mode display
+        DrawText(TextFormat("Mode: %s", GetModeName(currentTool)), 20, 20, 20, DARKGRAY);
+        DrawText("W: Wire | R: Resistor | D: DC | E: Edit | G: Ground | S: Solve | Delete: Clear", 20, 45, 16, DARKGRAY);
+
+
+        // Drawing Components
+        for (int i = 0; i < wireCount; i++)
+        {
+            DrawWire(wire[i].start,wire[i].end);
+        }
+
+        for (int i = 0; i < resistorCount; i++)
+        {
+            DrawResistor(resistor[i].position);
+
+            char valueText[20];
+
+            sprintf_s(valueText,sizeof(valueText),"%.0f ohm",resistor[i].value);
+
+            DrawText(valueText,resistor[i].position.x - 25,resistor[i].position.y - 35,18,BLACK);
+        }
+
+        for (int i = 0; i < dcSourceCount; i++)
+        {
+            DrawDCSource(dcSource[i].position);
+
+            char valueText[20];
+
+            sprintf_s(valueText,sizeof(valueText),"%.0f V",dcSource[i].value);
+
+            DrawText(valueText,dcSource[i].position.x + 35,dcSource[i].position.y - 10,18,BLACK);
+        }
+
+
+        //Drawing Selected Components
+        if (selectedResistor != -1)
+        {
+            Rectangle resistorBox =
+            {
+                resistor[selectedResistor].position.x - 50,
+                resistor[selectedResistor].position.y - 15,
+                100,
+                30
+            };
+
+            DrawRectangleLinesEx(resistorBox,2,BLUE);
+        }
+
+        if (selectedDCSource != -1)
+        {
+            Rectangle sourceBox =
+            {
+                dcSource[selectedDCSource].position.x - 30,
+                dcSource[selectedDCSource].position.y - 50,
+                60,
+                100
+            };
+
+            DrawRectangleLinesEx(sourceBox,2,BLUE);
+        }
+
+        if (groundPlaced)
+        {
+            DrawCircleV(groundPosition,6,BLUE);
+        }
+
 
         if (currentTool == TOOL_WIRE)
         {
+            //Preview Drawing
+            DrawCircleV(snappedPosition, 4, RED);
+
+            if (wireStarted)
+            {
+                DrawWire(wireStart, snappedPosition);
+            }
+
+            //Cancel the Wire
             if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
             {
                 wireStarted = false;
             }
 
-
+            //Place the Wire
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
                 if (!wireStarted)
@@ -266,7 +322,6 @@ int main(void)
                     wireStart = snappedPosition;
                     wireStarted = true;
                 }
-
                 else
                 {
                     if (wireCount < 100)
@@ -281,56 +336,47 @@ int main(void)
                 }
             }
         }
-
-
-        // -------------------------------------------------
-        // Resistor placement
-        // -------------------------------------------------
-
+ 
         if (currentTool == TOOL_RESISTOR)
         {
+            //Preview Drawing
+            DrawResistor(snappedPosition);
+
+            //Place the Resistor
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
                 if (resistorCount < 100)
                 {
-                    resistor[resistorCount].position =
-                        snappedPosition;
-
+                    resistor[resistorCount].position = snappedPosition;
                     resistor[resistorCount].value = 0;
-
                     resistorCount++;
                 }
             }
         }
 
-
-        // -------------------------------------------------
-        // DC source placement
-        // -------------------------------------------------
-
         if (currentTool == TOOL_DC_SOURCE)
         {
+            //Preview Drawing
+            DrawDCSource(snappedPosition);
+
+            //Place the DC Source
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
                 if (dcSourceCount < 100)
                 {
-                    dcSource[dcSourceCount].position =
-                        snappedPosition;
-
+                    dcSource[dcSourceCount].position = snappedPosition;
                     dcSource[dcSourceCount].value = 0;
-
                     dcSourceCount++;
                 }
             }
         }
 
-
-        // -------------------------------------------------
-        // Ground placement
-        // -------------------------------------------------
-
         if (currentTool == TOOL_GROUND)
         {
+            //Preview Drawing
+            DrawCircleV(snappedPosition, 4, RED);
+
+            //Place the Ground
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
                 groundPosition = snappedPosition;
@@ -338,18 +384,12 @@ int main(void)
             }
         }
 
-
-        // -------------------------------------------------
-        // Component selection / editing
-        // -------------------------------------------------
-
         if (currentTool == TOOL_SELECT)
         {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
                 selectedResistor = -1;
                 selectedDCSource = -1;
-
 
                 for (int i = 0; i < resistorCount; i++)
                 {
@@ -361,15 +401,13 @@ int main(void)
                         30
                     };
 
-                    if (CheckCollisionPointRec(
-                        mousePosition,
-                        resistorBox))
+                    if (CheckCollisionPointRec(mousePosition, resistorBox))
                     {
                         selectedResistor = i;
+                        selectedDCSource = -1;
                         break;
                     }
                 }
-
 
                 for (int i = 0; i < dcSourceCount; i++)
                 {
@@ -381,9 +419,7 @@ int main(void)
                         100
                     };
 
-                    if (CheckCollisionPointRec(
-                        mousePosition,
-                        sourceBox))
+                    if (CheckCollisionPointRec(mousePosition, sourceBox))
                     {
                         selectedDCSource = i;
                         selectedResistor = -1;
@@ -415,202 +451,8 @@ int main(void)
             }
         }
 
-
-        // =================================================
-        // DRAWING
-        // =================================================
-
-        BeginDrawing();
-
-        ClearBackground(RAYWHITE);
-
-        DrawCircuitGrid();
-
-
-        // Wires
-        for (int i = 0; i < wireCount; i++)
-        {
-            DrawWire(
-                wire[i].start,
-                wire[i].end
-            );
-        }
-
-
-        // Resistors
-        for (int i = 0; i < resistorCount; i++)
-        {
-            DrawResistor(
-                resistor[i].position
-            );
-
-            char valueText[20];
-
-            sprintf_s(
-                valueText,
-                sizeof(valueText),
-                "%.0f ohm",
-                resistor[i].value
-            );
-
-            DrawText(
-                valueText,
-                resistor[i].position.x - 25,
-                resistor[i].position.y - 35,
-                18,
-                BLACK
-            );
-        }
-
-
-        // DC sources
-        for (int i = 0; i < dcSourceCount; i++)
-        {
-            DrawDCSource(
-                dcSource[i].position
-            );
-
-            char valueText[20];
-
-            sprintf_s(
-                valueText,
-                sizeof(valueText),
-                "%.0f V",
-                dcSource[i].value
-            );
-
-            DrawText(
-                valueText,
-                dcSource[i].position.x + 35,
-                dcSource[i].position.y - 10,
-                18,
-                BLACK
-            );
-        }
-
-
-        // Selected resistor
-        if (selectedResistor != -1)
-        {
-            Rectangle resistorBox =
-            {
-                resistor[selectedResistor].position.x - 50,
-                resistor[selectedResistor].position.y - 15,
-                100,
-                30
-            };
-
-            DrawRectangleLinesEx(
-                resistorBox,
-                2,
-                BLUE
-            );
-        }
-
-
-        // Selected source
-        if (selectedDCSource != -1)
-        {
-            Rectangle sourceBox =
-            {
-                dcSource[selectedDCSource].position.x - 30,
-                dcSource[selectedDCSource].position.y - 50,
-                60,
-                100
-            };
-
-            DrawRectangleLinesEx(
-                sourceBox,
-                2,
-                BLUE
-            );
-        }
-
-
-        // Ground
-        if (groundPlaced)
-        {
-            DrawCircleV(
-                groundPosition,
-                6,
-                BLUE
-            );
-        }
-
-
-        // Wire preview
-        if (currentTool == TOOL_WIRE)
-        {
-            DrawCircleV(
-                snappedPosition,
-                4,
-                RED
-            );
-
-            if (wireStarted)
-            {
-                DrawWire(
-                    wireStart,
-                    snappedPosition
-                );
-            }
-        }
-
-
-        // Resistor preview
-        if (currentTool == TOOL_RESISTOR)
-        {
-            DrawResistor(
-                snappedPosition
-            );
-        }
-
-
-        // Source preview
-        if (currentTool == TOOL_DC_SOURCE)
-        {
-            DrawDCSource(
-                snappedPosition
-            );
-        }
-
-
-        // Ground preview
-        if (currentTool == TOOL_GROUND)
-        {
-            DrawCircleV(
-                snappedPosition,
-                4,
-                RED
-            );
-        }
-
-
-        // Mode display
-        DrawText(
-            TextFormat(
-                "Mode: %s",
-                GetModeName(currentTool)
-            ),
-            20,
-            20,
-            20,
-            DARKGRAY
-        );
-
-
-        DrawText(
-            "W: Wire | R: Resistor | D: DC | E: Edit | G: Ground | S: Solve | Delete: Clear",
-            20,
-            45,
-            16,
-            DARKGRAY
-        );
-
-
         EndDrawing();
     }
-
 
     CloseWindow();
 
