@@ -1,6 +1,10 @@
-#ifndef GRID_H  //Prevent C from including the same header multiple times
-#define GRID_H
+#ifndef GRID_H
+#define GRID_H //Stop header file from being used multiple times
 
-void DrawCircuitGrid(); //There exist a fuction called DrawGrid()
+#include "raylib.h"
+
+void DrawCircuitGrid();
+
+Vector2 SnapToGrid(Vector2 position);
 
 #endif

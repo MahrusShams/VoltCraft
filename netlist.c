@@ -1,6 +1,5 @@
 #include <stdio.h>
-
-#include "components.h"
+#include "netlist.h"
 
 
 // ---------------------------------------------------------
