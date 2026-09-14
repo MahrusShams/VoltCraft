@@ -35,9 +35,9 @@ int buildAndSolveCircuit(
     int battery_index = num_active_nodes;
 
 
-    // -----------------------------------------------------
+   
     // Build MNA matrix
-    // -----------------------------------------------------
+    
 
     for (int i = 0; i < num_components; i++)
     {
@@ -92,9 +92,9 @@ int buildAndSolveCircuit(
     }
 
 
-    // -----------------------------------------------------
+    
     // Solve matrix
-    // -----------------------------------------------------
+   
 
     int status = solveMatrixDynamic(A, b, x, total_size);
 
@@ -105,9 +105,7 @@ int buildAndSolveCircuit(
     }
 
 
-    // -----------------------------------------------------
-    // Print node voltages
-    // -----------------------------------------------------
+   
 
     printf("\n--- NODE VOLTAGES ---\n");
 
@@ -123,9 +121,9 @@ int buildAndSolveCircuit(
     }
 
 
-    // -----------------------------------------------------
+    
     // Calculate component currents
-    // -----------------------------------------------------
+    
 
     printf("\n--- COMPONENT CURRENTS ---\n");
 
@@ -217,25 +215,7 @@ int buildAndSolveCircuit(
     }
 
 
-    // -----------------------------------------------------
-    // KCL check
-    // -----------------------------------------------------
 
-   /* printf("\n--- NODE CURRENT / KCL CHECK ---\n");
-
-    for (int i = 0; i <= num_active_nodes; i++)
-    {
-        if (fabs(nodeCurrent[i]) < 1e-9)
-        {
-            nodeCurrent[i] = 0.0;
-        }
-
-        printf(
-            "Net current at Node %d: %.9f A\n",
-            i,
-            nodeCurrent[i]
-        );
-    }*/
 
 
     return 0;
